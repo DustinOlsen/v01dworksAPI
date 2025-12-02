@@ -1,7 +1,12 @@
 import sqlite3
 from pathlib import Path
+import os
 
-DB_PATH = Path("stats.db")
+# Ensure data directory exists
+DATA_DIR = Path("data")
+DATA_DIR.mkdir(exist_ok=True)
+
+DB_PATH = DATA_DIR / "stats.db"
 
 def get_db():
     conn = sqlite3.connect(DB_PATH, check_same_thread=False)

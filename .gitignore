@@ -6,5 +6,6 @@ __pycache__/
 env/
 venv/
 *.db
-.salt
 *.mmdb
+data/*
+!data/.gitkeep

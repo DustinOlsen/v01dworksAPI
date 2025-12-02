@@ -16,6 +16,17 @@ A super basic, privacy-respecting visitor count tracker built with Python and Fa
 
 ## Installation
 
+### Option 1: Docker (Recommended)
+
+1.  Download `GeoLite2-City.mmdb` and place it in the project root.
+2.  Run with Docker Compose:
+    ```bash
+    docker-compose up -d
+    ```
+    The API will be available at `http://localhost:8000`.
+
+### Option 2: Local Python
+
 1.  Clone the repository.
 2.  Create a virtual environment:
     ```bash
@@ -30,20 +41,19 @@ A super basic, privacy-respecting visitor count tracker built with Python and Fa
 
 ## Usage
 
-1.  Run the server:
-    ```bash
-    uvicorn main:app --reload
-    ```
-    Or use the VS Code Task: `Run FastAPI`.
+1.  **Run the server**:
+    -   **Docker**: `docker-compose up`
+    -   **Local**: `uvicorn main:app --reload` (or use VS Code Task: `Run FastAPI`)
 
-2.  API Endpoints:
+2.  **API Endpoints**:
     -   `POST /track`: Record a visit.
     -   `GET /stats`: Retrieve statistics.
 
 ## Privacy Details
 
-- **IP Hashing**: Client IPs are hashed using SHA-256 with a salt stored in `.salt`. The salt is generated once on first run.
+- **IP Hashing**: Client IPs are hashed using SHA-256 with a salt stored in `data/.salt`. The salt is generated once on first run.
 - **Data Storage**:
+    -   Database is stored in `data/stats.db`.
     -   `unique_visitors`: Stores `ip_hash` and `last_seen`.
     -   `country_stats`: Stores `country_code` and `visitor_count`.
     -   `general_stats`: Stores `total_visits`.

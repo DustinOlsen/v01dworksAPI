@@ -5,9 +5,12 @@ import geoip2.database
 
 # Salt for hashing IP addresses. 
 # Created once and stored to maintain consistency across restarts.
-SALT_FILE = Path(".salt")
+SALT_FILE = Path("data/.salt")
 
 def get_salt():
+    # Ensure parent directory exists
+    SALT_FILE.parent.mkdir(exist_ok=True)
+    
     if not SALT_FILE.exists():
         salt = os.urandom(32)
         with open(SALT_FILE, "wb") as f:
