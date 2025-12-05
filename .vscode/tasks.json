@@ -9,7 +9,9 @@
 				"-m",
 				"uvicorn",
 				"main:app",
-				"--reload"
+				"--reload",
+				"--port",
+				"8011"
 			],
 			"isBackground": true,
 			"problemMatcher": [
