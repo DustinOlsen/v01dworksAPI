@@ -1,20 +1,35 @@
 import sqlite3
 from pathlib import Path
 import os
+import re
 
 # Ensure data directory exists
 DATA_DIR = Path("data")
 DATA_DIR.mkdir(exist_ok=True)
 
-DB_PATH = DATA_DIR / "stats.db"
+def get_db_path(site_id: str) -> Path:
+    # Sanitize site_id to prevent path traversal
+    # Allow alphanumeric, dashes, underscores, and dots (for domains)
+    safe_id = re.sub(r'[^a-zA-Z0-9_.-]', '', site_id)
+    if not safe_id:
+        safe_id = "default"
+    return DATA_DIR / f"{safe_id}.db"
 
-def get_db():
-    conn = sqlite3.connect(DB_PATH, check_same_thread=False)
+def get_db(site_id: str = "default"):
+    db_path = get_db_path(site_id)
+    
+    # Lazy initialization: if DB doesn't exist, create tables
+    if not db_path.exists():
+        init_db(site_id)
+        
+    conn = sqlite3.connect(db_path, check_same_thread=False)
     conn.row_factory = sqlite3.Row
     return conn
 
-def init_db():
-    conn = get_db()
+def init_db(site_id: str = "default"):
+    db_path = get_db_path(site_id)
+    conn = sqlite3.connect(db_path, check_same_thread=False)
+    conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS unique_visitors (

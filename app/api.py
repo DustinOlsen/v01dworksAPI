@@ -10,6 +10,7 @@ router = APIRouter()
 
 class VisitData(BaseModel):
     path: str = "/"
+    site_id: str = "default"
 
 @router.post("/track")
 def track_visit(request: Request, data: Optional[VisitData] = None):
@@ -24,6 +25,7 @@ def track_visit(request: Request, data: Optional[VisitData] = None):
     hashed_ip = hash_ip(client_ip)
     country = get_country_from_ip(client_ip)
     page_path = data.path if data and data.path else "/"
+    site_id = data.site_id if data and data.site_id else "default"
     
     # Parse User-Agent
     user_agent = request.headers.get("user-agent", "")
@@ -33,7 +35,7 @@ def track_visit(request: Request, data: Optional[VisitData] = None):
     referrer = request.headers.get("referer")
     referrer_category = parse_referrer_category(referrer)
     
-    conn = get_db()
+    conn = get_db(site_id)
     cursor = conn.cursor()
     
     # 1. Update Total Visits
@@ -136,8 +138,8 @@ def track_visit(request: Request, data: Optional[VisitData] = None):
     }
 
 @router.get("/stats")
-def get_stats():
-    conn = get_db()
+def get_stats(site_id: str = "default"):
+    conn = get_db(site_id)
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
     

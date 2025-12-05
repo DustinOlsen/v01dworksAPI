@@ -2,6 +2,12 @@
 
 Base URL: `http://localhost:8011` (default)
 
+## Multi-Site Support
+
+This API supports tracking multiple websites independently. Each site has its own isolated database.
+To track a specific site, simply provide a unique `site_id` (e.g., "my-blog", "portfolio", "client-site-1") when calling the endpoints.
+If no `site_id` is provided, data is stored in the "default" database.
+
 ## Endpoints
 
 ### 1. Check API Status
@@ -26,55 +32,90 @@ Records a new visit. Call this endpoint from your frontend application when a pa
 - **Body** (JSON, optional):
   ```json
   {
-    "path": "/current-page-path"
+    "path": "/current-page-path",
+    "site_id": "my-website-name"  // Optional. Defaults to "default"
   }
   ```
-  If no body is provided, the path defaults to `/`.
 
 - **Response**:
   ```json
   {
     "status": "ok",
-    "country": "US",      // ISO country code or "Unknown"
-    "unique": true,       // true if this is a new unique visitor (based on hashed IP)
-    "page": "/current-page-path"
+    "country": "US",
+    "unique": true,       // New unique visitor (ever)
+    "unique_today": true, // New unique visitor (today)
+    "page": "/current-page-path",
+    "ua_info": {
+        "device": "Desktop",
+        "browser": "Chrome",
+        "os": "Mac OS X"
+    },
+    "referrer": "Search Engine"
   }
   ```
 
-- **Example (cURL)**:
-  ```bash
-  curl -X POST http://localhost:8011/track \
-       -H "Content-Type: application/json" \
-       -d '{"path": "/blog/post-1"}'
+- **Example (JavaScript/Fetch)**:
+  ```javascript
+  fetch('http://localhost:8011/track', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      path: window.location.pathname,
+      site_id: 'my-portfolio' 
+    }),
+  });
   ```
 
 ### 3. Get Statistics
-Retrieves the aggregated visitor statistics.
+Retrieves the aggregated visitor statistics for a specific site.
 
 - **URL**: `/stats`
 - **Method**: `GET`
+- **Query Parameters**:
+  - `site_id` (optional): The ID of the site to retrieve stats for. Defaults to "default".
+
 - **Response**:
   ```json
   {
     "total_visits": 150,
     "unique_visitors": 42,
+    "history": [
+        {"date": "2023-10-27", "total_visits": 10, "unique_visitors": 5},
+        {"date": "2023-10-26", "total_visits": 15, "unique_visitors": 8}
+    ],
     "countries": {
       "US": 80,
-      "CA": 20,
-      "GB": 15,
-      "Unknown": 35
+      "CA": 20
     },
     "pages": {
       "/": 50,
-      "/blog/post-1": 30,
-      "/contact": 10
+      "/blog": 30
+    },
+    "devices": {
+        "Desktop": 100,
+        "Mobile": 50
+    },
+    "browsers": {
+        "Chrome": 90,
+        "Safari": 40
+    },
+    "os": {
+        "Windows": 80,
+        "Mac OS X": 40
+    },
+    "referrers": {
+        "Search Engine": 60,
+        "Direct": 40
     }
   }
   ```
 
 - **Example (cURL)**:
   ```bash
-  curl http://localhost:8011/stats
+  # Get stats for "my-portfolio"
+  curl "http://localhost:8011/stats?site_id=my-portfolio"
   ```
 
 ## Interactive Documentation

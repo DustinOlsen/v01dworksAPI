@@ -16,7 +16,8 @@ app.add_middleware(
 
 @app.on_event("startup")
 def on_startup():
-    init_db()
+    # Initialize default database
+    init_db("default")
 
 @app.get("/")
 def read_root():
