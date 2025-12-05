@@ -1,18 +1,24 @@
 from fastapi import APIRouter, Request
+from pydantic import BaseModel
+from typing import Optional
 from .database import get_db
 from .utils import hash_ip, get_country_from_ip
 import sqlite3
 
 router = APIRouter()
 
+class VisitData(BaseModel):
+    path: str = "/"
+
 @router.post("/track")
-def track_visit(request: Request):
+def track_visit(request: Request, data: Optional[VisitData] = None):
     # Get client IP. 
     # Note: If behind a proxy (like Nginx/Cloudflare), you might need request.headers.get("x-forwarded-for")
     client_ip = request.client.host
     
     hashed_ip = hash_ip(client_ip)
     country = get_country_from_ip(client_ip)
+    page_path = data.path if data and data.path else "/"
     
     conn = get_db()
     cursor = conn.cursor()
@@ -38,11 +44,19 @@ def track_visit(request: Request):
         ON CONFLICT(country_code) 
         DO UPDATE SET visitor_count = visitor_count + 1
     """, (country,))
+
+    # 4. Update Page Stats
+    cursor.execute("""
+        INSERT INTO page_stats (page_path, view_count) 
+        VALUES (?, 1) 
+        ON CONFLICT(page_path) 
+        DO UPDATE SET view_count = view_count + 1
+    """, (page_path,))
     
     conn.commit()
     conn.close()
     
-    return {"status": "ok", "country": country, "unique": is_unique}
+    return {"status": "ok", "country": country, "unique": is_unique, "page": page_path}
 
 @router.get("/stats")
 def get_stats():
@@ -60,11 +74,15 @@ def get_stats():
     
     cursor.execute("SELECT * FROM country_stats ORDER BY visitor_count DESC")
     countries = {row["country_code"]: row["visitor_count"] for row in cursor.fetchall()}
+
+    cursor.execute("SELECT * FROM page_stats ORDER BY view_count DESC")
+    pages = {row["page_path"]: row["view_count"] for row in cursor.fetchall()}
     
     conn.close()
     
     return {
         "total_visits": total_visits,
         "unique_visitors": unique_visitors,
-        "countries": countries
+        "countries": countries,
+        "pages": pages
     }

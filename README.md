@@ -6,7 +6,8 @@ A super basic, privacy-respecting visitor count tracker built with Python and Fa
 
 - **Privacy First**: No IP addresses are stored. IPs are hashed with a salt to track unique visitors without compromising user identity.
 - **Country Statistics**: Tracks visitor counts by country using GeoLite2 (local database).
-- **Simple Statistics**: Provides total visits, unique visitors count, and country breakdown.
+- **Page View Tracking**: Tracks most visited pages.
+- **Simple Statistics**: Provides total visits, unique visitors count, country breakdown, and page views.
 - **SQLite Database**: Lightweight and self-contained.
 
 ## Requirements
@@ -47,6 +48,7 @@ A super basic, privacy-respecting visitor count tracker built with Python and Fa
 
 2.  **API Endpoints**:
     -   `POST /track`: Record a visit.
+        -   Optional JSON body: `{"path": "/your-page-path"}`
     -   `GET /stats`: Retrieve statistics.
 
 ## Privacy Details
@@ -56,6 +58,7 @@ A super basic, privacy-respecting visitor count tracker built with Python and Fa
     -   Database is stored in `data/stats.db`.
     -   `unique_visitors`: Stores `ip_hash` and `last_seen`.
     -   `country_stats`: Stores `country_code` and `visitor_count`.
+    -   `page_stats`: Stores `page_path` and `view_count`.
     -   `general_stats`: Stores `total_visits`.
 -   No raw IP addresses or user agent strings are stored.
 

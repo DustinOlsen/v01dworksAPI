@@ -29,6 +29,12 @@ def init_db():
         )
     """)
     cursor.execute("""
+        CREATE TABLE IF NOT EXISTS page_stats (
+            page_path TEXT PRIMARY KEY,
+            view_count INTEGER DEFAULT 0
+        )
+    """)
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS general_stats (
             key TEXT PRIMARY KEY,
             value INTEGER DEFAULT 0
