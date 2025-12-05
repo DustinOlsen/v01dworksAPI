@@ -8,6 +8,10 @@ app = FastAPI(title="Privacy Visitor Tracker")
 def on_startup():
     init_db()
 
+@app.get("/")
+def read_root():
+    return {"message": "Privacy Visitor Tracker API is running"}
+
 app.include_router(router)
 
 if __name__ == "__main__":
