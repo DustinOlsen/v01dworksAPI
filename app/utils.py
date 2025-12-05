@@ -32,11 +32,17 @@ def get_country_from_ip(ip_address: str) -> str:
     Resolves an IP address to a country code using GeoLite2.
     Returns 'Unknown' if database is missing or IP is not found.
     """
-    # You need to download GeoLite2-City.mmdb and place it in the project root
-    db_path = "GeoLite2-City.mmdb"
+    # Check for Country or City database
+    db_files = ["GeoLite2-Country.mmdb", "GeoLite2-City.mmdb"]
+    db_path = next((f for f in db_files if os.path.exists(f)), None)
+    
+    if not db_path:
+        return "Unknown"
+
     try:
         with geoip2.database.Reader(db_path) as reader:
-            response = reader.city(ip_address)
+            # .country() works for both City and Country databases
+            response = reader.country(ip_address)
             return response.country.iso_code or "Unknown"
     except (FileNotFoundError, Exception):
         return "Unknown"
