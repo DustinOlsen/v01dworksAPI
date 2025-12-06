@@ -5,8 +5,13 @@ A super basic, privacy-respecting visitor count tracker built with Python and Fa
 ## Features
 
 - **Privacy First**: No IP addresses are stored. IPs are hashed with a salt to track unique visitors without compromising user identity.
+- **Multi-Site Support**: Track multiple websites with isolated databases.
+- **Machine Learning Insights**:
+    - **Traffic Forecasting**: Predicts future visitor trends.
+    - **Anomaly Detection**: Identifies unusual traffic spikes or dips.
+    - **Bot Detection**: Flags suspicious bot-like behavior.
 - **Country Statistics**: Tracks visitor counts by country using GeoLite2 (local database).
-- **Page View Tracking**: Tracks most visited pages.
+- **Page View & Link Tracking**: Tracks most visited pages and outgoing link clicks.
 - **Simple Statistics**: Provides total visits, unique visitors count, country breakdown, and page views.
 - **SQLite Database**: Lightweight and self-contained.
 

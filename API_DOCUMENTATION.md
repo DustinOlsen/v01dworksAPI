@@ -157,6 +157,94 @@ Retrieves the aggregated visitor statistics for a specific site.
   curl "http://localhost:8011/stats?site_id=my-portfolio"
   ```
 
+### 5. Get Traffic Forecast (ML)
+Predicts future visitor counts using Linear Regression.
+
+- **URL**: `/forecast`
+- **Method**: `GET`
+- **Query Parameters**:
+  - `site_id` (optional): Defaults to "default".
+  - `days` (optional): Number of days to predict (default: 7).
+
+- **Response**:
+  ```json
+  {
+    "can_forecast": true,
+    "forecast": [
+        {"date": "2023-12-07", "predicted_visits": 150},
+        {"date": "2023-12-08", "predicted_visits": 160}
+    ],
+    "trend": "increasing",
+    "slope": 10.5
+  }
+  ```
+
+### 6. Get Summary Insights (ML)
+Provides statistical summaries and growth metrics.
+
+- **URL**: `/summary`
+- **Method**: `GET`
+- **Query Parameters**:
+  - `site_id` (optional): Defaults to "default".
+
+- **Response**:
+  ```json
+  {
+    "average_daily_visits": 120.5,
+    "average_daily_unique": 85.2,
+    "busiest_day_of_week": "Wednesday",
+    "weekly_growth": {
+        "current_week_visits": 850,
+        "previous_week_visits": 700,
+        "growth_rate_percent": 21.4
+    }
+  }
+  ```
+
+### 7. Detect Anomalies (ML)
+Identifies unusual traffic spikes or dips using Isolation Forest.
+
+- **URL**: `/anomalies`
+- **Method**: `GET`
+- **Query Parameters**:
+  - `site_id` (optional): Defaults to "default".
+
+- **Response**:
+  ```json
+  {
+    "has_anomalies": true,
+    "anomalies": [
+        {
+            "date": "2023-12-01",
+            "visits": 500,
+            "type": "spike"
+        }
+    ]
+  }
+  ```
+
+### 8. Detect Bots (ML)
+Identifies potential bots based on request patterns and user agent scores.
+
+- **URL**: `/bots`
+- **Method**: `GET`
+- **Query Parameters**:
+  - `site_id` (optional): Defaults to "default".
+
+- **Response**:
+  ```json
+  {
+    "detected_bots_count": 2,
+    "bots": [
+        {
+            "ip_hash": "a1b2c3...",
+            "request_count": 500,
+            "reason": "High Request Volume, Abnormal Request Rate"
+        }
+    ]
+  }
+  ```
+
 ## Interactive Documentation
 
 Since this API is built with FastAPI, you can also access interactive documentation generated automatically:
