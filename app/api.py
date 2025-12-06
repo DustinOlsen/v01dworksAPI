@@ -54,25 +54,31 @@ def register_key(data: RegisterKeyData):
     return {"status": "ok", "message": "Public key registered"}
 
 @router.get("/pair/{site_id}", response_class=HTMLResponse)
-def pair_device(site_id: str, request: Request):
+def pair_device(site_id: str, request: Request, force: bool = False):
     """
-    Generates a new key pair for the site and returns a QR code 
-    containing the configuration (URL, Site ID, Private Key) for the iOS app.
-    Only works if no key is currently registered.
+    Generates a new key pair for the site and returns a QR code.
+    If force=True, overwrites existing key.
     """
     conn = get_db(site_id)
     cursor = conn.cursor()
     
     # 1. Check if key already exists
     cursor.execute("SELECT key_value FROM auth_config WHERE key_type = 'public_key'")
-    if cursor.fetchone():
+    if cursor.fetchone() and not force:
         conn.close()
         return HTMLResponse(
-            "<h1>Error: Already Paired</h1>"
-            "<p>A public key is already registered for this site.</p>"
-            "<p>To re-pair, you must manually delete the key from the database or use a new site ID.</p>",
+            f"""
+            <h1>Error: Already Paired</h1>
+            <p>A public key is already registered for site: <strong>{site_id}</strong>.</p>
+            <p>To overwrite the existing key (and break current access), add <code>?force=true</code> to the URL.</p>
+            <p><a href="{request.url}?force=true">Click here to Force Re-pair</a></p>
+            """,
             status_code=403
         )
+    
+    # If forcing, delete old key
+    if force:
+        cursor.execute("DELETE FROM auth_config WHERE key_type = 'public_key'")
         
     # 2. Generate New Key Pair
     private_key = Ed25519PrivateKey.generate()
@@ -156,6 +162,22 @@ def pair_device(site_id: str, request: Request):
     </html>
     """
     return HTMLResponse(content=html_content)
+
+@router.get("/debug/auth-status/{site_id}")
+def get_auth_status(site_id: str):
+    """
+    Checks if a public key is registered for the given site_id.
+    """
+    conn = get_db(site_id)
+    cursor = conn.cursor()
+    cursor.execute("SELECT key_value FROM auth_config WHERE key_type = 'public_key'")
+    row = cursor.fetchone()
+    conn.close()
+    return {
+        "site_id": site_id,
+        "is_locked": row is not None,
+        "db_path": f"data/{site_id}.db" # Approximate path
+    }
 
 @router.get("/sites")
 def get_sites():
