@@ -1,72 +1,133 @@
 # Privacy-Focused Visitor Tracker API
 
-A super basic, privacy-respecting visitor count tracker built with Python and FastAPI.
+A lightweight, privacy-respecting analytics API built with Python (FastAPI) and SQLite. It provides visitor tracking, multi-site support, machine learning insights, and optional cryptographic authentication.
 
-## Features
+## 🚀 Features
 
-- **Privacy First**: No IP addresses are stored. IPs are hashed with a salt to track unique visitors without compromising user identity.
-- **Multi-Site Support**: Track multiple websites with isolated databases.
-- **Machine Learning Insights**:
-    - **Traffic Forecasting**: Predicts future visitor trends.
-    - **Anomaly Detection**: Identifies unusual traffic spikes or dips.
-    - **Bot Detection**: Flags suspicious bot-like behavior.
-- **Optional Authentication**: Secure your data with Ed25519 key-based authentication.
-- **Country Statistics**: Tracks visitor counts by country using GeoLite2 (local database).
-- **Page View & Link Tracking**: Tracks most visited pages and outgoing link clicks.
-- **Simple Statistics**: Provides total visits, unique visitors count, country breakdown, and page views.
-- **SQLite Database**: Lightweight and self-contained.
+### 🔒 Privacy & Security
+- **No PII Storage**: IP addresses are hashed with a persistent salt using SHA-256.
+- **Ed25519 Authentication**: Optional key-based authentication to secure your analytics data.
+- **QR Code Pairing**: Instantly pair with the companion iOS app via QR code.
 
-## Requirements
+### 📊 Analytics & Tracking
+- **Multi-Site Support**: Track unlimited websites with isolated databases per `site_id`.
+- **Visitor Stats**: Unique visitors, total page views, and daily history.
+- **Geo-Location**: Country-level breakdown using local GeoLite2 database.
+- **Device Fingerprinting**: Tracks Browser, OS, and Device Type (Mobile/Desktop/Bot).
+- **Referrer Tracking**: Categorizes traffic sources (Search, Social, Direct, etc.).
+- **Outgoing Links**: Track clicks on external links.
 
-- Python 3.11+
-- GeoLite2 City Database (`GeoLite2-City.mmdb`) - *Note: You must obtain this from MaxMind or another source and place it in the project root.*
+### 🤖 Machine Learning Insights
+- **Traffic Forecasting**: Predicts future traffic trends using Linear Regression.
+- **Anomaly Detection**: Identifies unusual traffic patterns using Isolation Forest.
+- **Bot Detection**: Advanced heuristic and ML-based bot classification.
 
-## Installation
+## 🛠 Requirements
+
+- **Docker** (Recommended) OR **Python 3.11+**
+- **GeoLite2 City Database** (`GeoLite2-City.mmdb`)
+  - *Required for country statistics. Download from MaxMind and place in the project root.*
+
+## 📦 Installation
 
 ### Option 1: Docker (Recommended)
 
-1.  Download `GeoLite2-City.mmdb` and place it in the project root.
-2.  Run with Docker Compose:
+1.  **Setup**:
     ```bash
-    docker-compose up -d
+    # Clone repository
+    git clone <repo-url>
+    cd v01dworksAnalyticsAPI
+
+    # Place GeoLite2-City.mmdb in the root folder
     ```
-    The API will be available at `http://localhost:8000`.
+
+2.  **Run**:
+    ```bash
+    docker-compose up -d --build
+    ```
+    The API will be available at `http://localhost:8011`.
 
 ### Option 2: Local Python
 
-1.  Clone the repository.
-2.  Create a virtual environment:
+1.  **Environment**:
     ```bash
     python -m venv .venv
-    source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-    ```
-3.  Install dependencies:
-    ```bash
+    source .venv/bin/activate  # Windows: .venv\Scripts\activate
     pip install -r requirements.txt
     ```
-4.  Download `GeoLite2-City.mmdb` and place it in the root directory.
 
-## Usage
+2.  **Run**:
+    ```bash
+    uvicorn main:app --reload --port 8011
+    ```
 
-1.  **Run the server**:
-    -   **Docker**: `docker-compose up`
-    -   **Local**: `uvicorn main:app --reload` (or use VS Code Task: `Run FastAPI`)
+## 📖 Usage Guide
 
-2.  **API Endpoints**:
-    -   `POST /track`: Record a visit.
-        -   Optional JSON body: `{"path": "/your-page-path"}`
-    -   `GET /stats`: Retrieve statistics.
+### 1. Tracking a Visit
+Send a POST request from your frontend when a page loads.
 
-## Privacy Details
+**JavaScript Example:**
+```javascript
+fetch('http://localhost:8011/track', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    path: window.location.pathname,
+    site_id: 'my-awesome-site' // Optional: defaults to 'default'
+  })
+});
+```
 
-- **IP Hashing**: Client IPs are hashed using SHA-256 with a salt stored in `data/.salt`. The salt is generated once on first run.
-- **Data Storage**:
-    -   Database is stored in `data/stats.db`.
-    -   `unique_visitors`: Stores `ip_hash` and `last_seen`.
-    -   `country_stats`: Stores `country_code` and `visitor_count`.
-    -   `page_stats`: Stores `page_path` and `view_count`.
-    -   `general_stats`: Stores `total_visits`.
--   No raw IP addresses or user agent strings are stored.
+### 2. Viewing Statistics
+- **Public Access**: By default, stats are public.
+  - `GET /stats?site_id=my-awesome-site`
+- **Authenticated Access**: If you register a key, you must sign requests.
+
+### 3. Authentication & Pairing
+Secure your data so only you can view it.
+
+- **iOS App Pairing**:
+  *This feature is designed for the upcoming iOS companion app.*
+  1. Go to `http://localhost:8011/pair/my-awesome-site` in your browser.
+  2. Scan the QR code to pair (once the app is released).
+  3. The site is now locked and paired.
+
+- **Manual Setup**:
+  See [AUTH_GUIDE.md](AUTH_GUIDE.md) for details on generating keys and signing requests manually.
+
+## 📚 Documentation
+
+- **[API_DOCUMENTATION.md](API_DOCUMENTATION.md)**: Full API reference including all endpoints and parameters.
+- **[AUTH_GUIDE.md](AUTH_GUIDE.md)**: Technical guide for implementing the Ed25519 authentication scheme.
+
+## 🏗 Project Structure
+
+```
+├── app/
+│   ├── api.py          # API Routes & Logic
+│   ├── auth.py         # Cryptography & Signature Verification
+│   ├── database.py     # SQLite Connection & Schema
+│   ├── ml.py           # Machine Learning Models
+│   └── utils.py        # IP Hashing & GeoIP Helpers
+├── data/               # SQLite Databases (*.db) & Salt
+├── main.py             # FastAPI Entrypoint
+├── Dockerfile          # Container Config
+└── requirements.txt    # Python Dependencies
+```
+
+## 🛡 Privacy Architecture
+
+1.  **Salt Generation**: On first run, a random salt is generated in `data/.salt`.
+2.  **Hashing**: `SHA256(IP + Salt)` is used as the unique identifier.
+3.  **Storage**: Only the hash is stored. The original IP is discarded immediately after processing location data.
+4.  **Isolation**: Each `site_id` gets its own `.db` file, ensuring data separation.
+
+## 📱 iOS Companion App (Coming Soon)
+
+A native iOS app is currently in development to visualize your analytics on the go.
+- **Widgets**: View stats right from your home screen.
+- **Secure Pairing**: Scan a QR code to securely link your API.
+- **Privacy**: Your data stays on your server and your device.
 
 ## License
 
