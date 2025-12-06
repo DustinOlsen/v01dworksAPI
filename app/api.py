@@ -148,7 +148,10 @@ def pair_device(site_id: str, request: Request):
                 <br>Once scanned, close this page.
             </div>
             
-            <p><small>Public Key has been registered successfully.</small></p>
+            <div style="margin-top: 30px; text-align: left; display: inline-block; max-width: 100%;">
+                <p><strong>Public Key (for manual registration on other sites):</strong></p>
+                <code style="word-break: break-all; display: block; padding: 10px; border: 1px solid #ddd;">{public_hex}</code>
+            </div>
         </body>
     </html>
     """
