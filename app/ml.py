@@ -156,3 +156,66 @@ def detect_anomalies(site_id: str):
         "has_anomalies": len(results) > 0,
         "anomalies": results
     }
+
+def detect_bots(site_id: str):
+    """
+    Identifies potential bots using Isolation Forest on visitor activity.
+    """
+    conn = get_db(site_id)
+    try:
+        # Fetch visitor activity
+        query = "SELECT * FROM visitor_activity"
+        df = pd.read_sql_query(query, conn)
+    finally:
+        conn.close()
+        
+    if len(df) < 10:
+        return {"message": "Not enough data for bot detection (need > 10 visitors)"}
+        
+    # Features for detection:
+    # 1. Request Count (High count = suspicious)
+    # 2. Duration (Last Seen - First Seen) in seconds
+    # 3. Rate (Requests / Duration)
+    
+    df['first_seen'] = pd.to_datetime(df['first_seen'])
+    df['last_seen'] = pd.to_datetime(df['last_seen'])
+    df['duration'] = (df['last_seen'] - df['first_seen']).dt.total_seconds()
+    
+    # Avoid division by zero
+    df['duration'] = df['duration'].replace(0, 1) 
+    df['request_rate'] = df['request_count'] / df['duration']
+    
+    # Prepare features
+    features = ['request_count', 'request_rate', 'ua_score']
+    X = df[features].fillna(0)
+    
+    # Detect anomalies
+    iso_forest = IsolationForest(contamination=0.05, random_state=42) # Assume top 5% are suspicious
+    df['is_bot'] = iso_forest.fit_predict(X)
+    
+    # Filter bots (-1)
+    bots = df[df['is_bot'] == -1].copy()
+    
+    results = []
+    for _, row in bots.iterrows():
+        reason = []
+        if row['request_count'] > df['request_count'].mean() * 2:
+            reason.append("High Request Volume")
+        if row['request_rate'] > df['request_rate'].mean() * 2:
+            reason.append("Abnormal Request Rate")
+        if row['ua_score'] > 0.8: # Assuming 1.0 is very rare/suspicious
+            reason.append("Suspicious User Agent")
+            
+        if not reason:
+            reason.append("Unusual Pattern")
+            
+        results.append({
+            "ip_hash": row['ip_hash'],
+            "request_count": int(row['request_count']),
+            "reason": ", ".join(reason)
+        })
+        
+    return {
+        "detected_bots_count": len(results),
+        "bots": results
+    }

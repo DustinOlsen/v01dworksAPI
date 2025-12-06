@@ -4,7 +4,7 @@ from typing import Optional
 from datetime import datetime
 from .database import get_db
 from .utils import hash_ip, get_country_from_ip, parse_user_agent_info, parse_referrer_category
-from .ml import generate_forecast, generate_summary, detect_anomalies
+from .ml import generate_forecast, generate_summary, detect_anomalies, detect_bots
 import sqlite3
 
 router = APIRouter()
@@ -59,6 +59,23 @@ def track_visit(request: Request, data: Optional[VisitData] = None):
     
     conn = get_db(site_id)
     cursor = conn.cursor()
+    
+    # --- Update Visitor Activity (For Bot Detection) ---
+    # Calculate simple UA score (1.0 if unknown/bot, 0.0 if common)
+    # This is a simplified heuristic. In production, you'd query the browser_stats frequency.
+    ua_score = 0.0
+    if ua_info['device'] == 'Bot' or ua_info['browser'] == 'Unknown':
+        ua_score = 1.0
+        
+    cursor.execute("""
+        INSERT INTO visitor_activity (ip_hash, request_count, ua_score)
+        VALUES (?, 1, ?)
+        ON CONFLICT(ip_hash)
+        DO UPDATE SET 
+            last_seen = CURRENT_TIMESTAMP,
+            request_count = request_count + 1,
+            ua_score = ?
+    """, (hashed_ip, ua_score, ua_score))
     
     # 1. Update Total Visits
     cursor.execute("UPDATE general_stats SET value = value + 1 WHERE key = 'total_visits'")
@@ -224,3 +241,7 @@ def get_summary(site_id: str = "default"):
 @router.get("/anomalies")
 def get_anomalies(site_id: str = "default"):
     return detect_anomalies(site_id)
+
+@router.get("/bots")
+def get_bots(site_id: str = "default"):
+    return detect_bots(site_id)

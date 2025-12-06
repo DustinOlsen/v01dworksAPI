@@ -87,6 +87,24 @@ def init_db(site_id: str = "default"):
         )
     """)
     cursor.execute("""
+        CREATE TABLE IF NOT EXISTS visitor_activity (
+            ip_hash TEXT PRIMARY KEY,
+            first_seen TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            last_seen TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            request_count INTEGER DEFAULT 1,
+            ua_score REAL DEFAULT 0.0
+        )
+    """)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS bot_logs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            ip_hash TEXT,
+            detected_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            reason TEXT,
+            confidence REAL
+        )
+    """)
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS general_stats (
             key TEXT PRIMARY KEY,
             value INTEGER DEFAULT 0
