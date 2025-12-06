@@ -56,7 +56,7 @@ Checks if the API is running.
   ```
 
 ### 2. List All Sites
-Returns a list of all site IDs that have data stored.
+Returns a list of all site IDs that have data stored, along with their authentication status.
 
 - **URL**: `/sites`
 - **Method**: `GET`
@@ -64,9 +64,14 @@ Returns a list of all site IDs that have data stored.
   ```json
   {
     "sites": [
-      "default",
-      "my-blog",
-      "portfolio"
+      {
+        "id": "default",
+        "requiresAuth": false
+      },
+      {
+        "id": "my-blog",
+        "requiresAuth": true
+      }
     ]
   }
   ```

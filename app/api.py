@@ -181,7 +181,26 @@ def get_auth_status(site_id: str):
 
 @router.get("/sites")
 def get_sites():
-    return {"sites": list_sites()}
+    """
+    Returns a list of available sites with their auth status.
+    """
+    site_ids = list_sites()
+    sites_data = []
+    
+    for site_id in site_ids:
+        # Check if site requires auth
+        conn = get_db(site_id)
+        cursor = conn.cursor()
+        cursor.execute("SELECT key_value FROM auth_config WHERE key_type = 'public_key'")
+        row = cursor.fetchone()
+        conn.close()
+        
+        sites_data.append({
+            "id": site_id,
+            "requiresAuth": row is not None
+        })
+        
+    return {"sites": sites_data}
 
 @router.post("/click")
 def track_click(request: Request, data: ClickData):
